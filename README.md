@@ -32,21 +32,48 @@ The scroll length you give it (for example `360vh`) is the whole film. A page th
 
 The three usage examples below show each path.
 
-## Install
+## Use it locally
+
+reel is not on npm yet, so use it straight from the clone.
 
 ```bash
-npm install reel
+git clone https://github.com/sayantan94/reel.git
+cd reel
+npm install
+npm run build
 ```
+
+**Try the demo.** It needs a server that supports HTTP range requests (a plain file open will not scrub), so serve the folder:
+
+```bash
+npx serve .
+# then open the printed url at /examples/demo
+```
+
+**Turn any video into a background** with the CLI, run straight from the clone:
+
+```bash
+node bin/reel.mjs prepare ./my_clip.mp4
+node bin/reel.mjs prepare "https://www.youtube.com/watch?v=ID" --start 60 --seconds 20
+node bin/reel.mjs prepare ./ocean.mp4 --height 1080 --crf 24 --out public/hero
+```
+
+**Use it inside another local project.** Install it by path, or link it:
+
+```bash
+# from your project, point at the clone
+npm install /path/to/reel
+
+# or link it, so edits in reel show up live
+cd /path/to/reel && npm link
+cd /path/to/your-project && npm link reel
+```
+
+Then import it as shown below. Once it is published, all of this becomes `npm install reel` and `npx reel prepare`.
 
 ## Take any video and create a background
 
-Give `reel` any clip (a local file, a direct URL, or a YouTube link) and it builds a scrub ready background: it re encodes the clip so every frame is a keyframe (that is what makes scrubbing smooth), pulls a poster, and writes a `preview.html` you can open to see it.
-
-```bash
-npx reel prepare ./my_clip.mp4
-npx reel prepare "https://www.youtube.com/watch?v=ID" --start 60 --seconds 20
-npx reel prepare ./ocean.mp4 --height 1080 --crf 24 --out public/hero
-```
+Give `reel` any clip (a local file, a direct URL, or a YouTube link) and it builds a scrub ready background: it re encodes the clip so every frame is a keyframe (that is what makes scrubbing smooth), pulls a poster, and writes a `preview.html` you can open to see it. From the clone, call it with `node bin/reel.mjs prepare` (or plain `reel prepare` once linked or published).
 
 Flags: `--out <dir>`, `--name <base>`, `--height <px>`, `--crf <n>`, `--start <sec>`, `--seconds <n>`, `--no_preview`. Needs `ffmpeg` on your PATH (and `yt-dlp` for streaming links).
 
@@ -120,4 +147,4 @@ Keep it hero sized, a few MB, and serve it from a host that supports HTTP range 
 
 ## License
 
-MIT © Sayantan Bhowmik
+MIT

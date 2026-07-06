@@ -1,0 +1,14 @@
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="reel logo">
+  <rect width="200" height="200" rx="44" fill="#0F0F17"/>
+  <!-- film reel -->
+  <circle cx="100" cy="100" r="58" stroke="#F0663B" stroke-width="9"/>
+  <circle cx="100" cy="100" r="13" fill="#F0663B"/>
+  <circle cx="100" cy="66" r="9" fill="#F0663B"/>
+  <circle cx="129" cy="83" r="9" fill="#F0663B"/>
+  <circle cx="129" cy="117" r="9" fill="#F0663B"/>
+  <circle cx="100" cy="134" r="9" fill="#F0663B"/>
+  <circle cx="71" cy="117" r="9" fill="#F0663B"/>
+  <circle cx="71" cy="83" r="9" fill="#F0663B"/>
+  <!-- scroll-to-scrub cue -->
+  <path d="M100 150 v20 M92 164 l8 8 8 -8" stroke="#8A8AA0" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

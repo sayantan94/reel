@@ -1,14 +1,36 @@
-# reel
+<p align="center">
+  <img src="assets/logo.svg" width="112" alt="reel" />
+</p>
 
-**Turn any page into a film you scrub by scrolling.** A fixed, full-bleed video is pinned behind your content and its timeline is driven by scroll position — scroll down and the film plays forward, scroll up and it rewinds. Add scroll-pinned reveals so headlines and copy bloom in as the film unspools.
+<h1 align="center">reel</h1>
 
-Inspired by the "dye-in-water" scrollytelling look, generalized into a drop-in you can put on any site.
+<p align="center">Turn any page into a film you scrub by scrolling.</p>
 
-- **Framework-agnostic core** (vanilla TS) + a **React** API.
-- **~2 KB** of logic. No dependencies.
-- rAF loop with lerp smoothing so scrubbing is silky, not steppy.
-- Optional **blob preload** for glassy, stutter-free seeks.
-- Respects `prefers-reduced-motion`.
+A full bleed video sits pinned behind your content and its timeline follows the scroll. Scroll down and the film plays forward, scroll up and it rewinds. Pin headlines and copy so they bloom in as the film unspools.
+
+* Framework free core plus a React layer.
+* Around 2 KB of logic, zero dependencies.
+* Smooth scrubbing via a request animation frame loop with lerp easing.
+* One command to turn any clip into a scrub ready background.
+
+## How it works
+
+reel does three things:
+
+1. It pins your video full screen behind the page.
+2. It maps the scroll position onto the video playback time, so the film becomes a timeline you scrub. Scroll down and it moves forward, scroll up and it goes back.
+3. It reveals content you pin to a progress window, so a headline can fade in exactly when the film reaches a certain moment.
+
+The scroll length you give it (for example `360vh`) is the whole film. A page that scrolls three and a half screens plays the entire clip from start to finish.
+
+## How to use it
+
+1. **Prepare a clip.** Run `npx reel prepare your_video.mp4`. You get a web ready `your_video.mp4` (re encoded so every frame is seekable), a poster image, and a `preview.html` to check it.
+2. **Drop the files into your site**, for example into `public/`.
+3. **Add reel and point it at the clip.** Use the `Reel` component in React, or the `data-reel` markup on any site. Set `length` to how long you want the scroll to be.
+4. **Pin your content.** Wrap headlines in `Reveal` (React) or `data-reel-reveal="start,end"` (HTML) with a start and end between 0 and 1, and they fade in as the film reaches that point.
+
+The three usage examples below show each path.
 
 ## Install
 
@@ -16,34 +38,28 @@ Inspired by the "dye-in-water" scrollytelling look, generalized into a drop-in y
 npm install reel
 ```
 
-## Take any video → a background (CLI)
+## Take any video and create a background
 
-Give `reel` any clip (local file or URL) and it produces a scrub-ready
-background: re-encodes it all-intra (every frame seekable, so scrubbing is
-glassy), extracts a poster, writes a `preview.html` you can open to see it, and
-prints the copy-paste snippet.
+Give `reel` any clip (a local file, a direct URL, or a YouTube link) and it builds a scrub ready background: it re encodes the clip so every frame is a keyframe (that is what makes scrubbing smooth), pulls a poster, and writes a `preview.html` you can open to see it.
 
 ```bash
-npx reel prepare ./my-clip.mp4
-npx reel prepare https://example.com/ink.mp4 --height 1080 --crf 24 --out public/hero
+npx reel prepare ./my_clip.mp4
+npx reel prepare "https://www.youtube.com/watch?v=ID" --start 60 --seconds 20
+npx reel prepare ./ocean.mp4 --height 1080 --crf 24 --out public/hero
 ```
 
-Options: `--out <dir>` (default `./reel-out`), `--name <base>`, `--height <px>`
-(default 1080), `--crf <n>` (default 26), `--no-preview`. Requires `ffmpeg` on
-your PATH.
+Flags: `--out <dir>`, `--name <base>`, `--height <px>`, `--crf <n>`, `--start <sec>`, `--seconds <n>`, `--no_preview`. Needs `ffmpeg` on your PATH (and `yt-dlp` for streaming links).
 
 Output:
 
 ```
-✓ background ready in reel-out/
-  my-clip.mp4        ← all-intra, faststart, audio stripped
-  my-clip-poster.jpg
-  preview.html       ← open to see the background live
+ok background ready in reel-out/
+  my_clip.mp4        every frame seekable, web optimised, silent
+  my_clip-poster.jpg
+  preview.html       open to watch the background
 ```
 
-Then drop the `.mp4` into your site and use the React or HTML API below.
-
-## React
+## Use it in React
 
 ```tsx
 import { Reel, Reveal } from "reel";
@@ -51,20 +67,19 @@ import "reel/styles.css";
 
 export default function Hero() {
   return (
-    <Reel src="/ink.mp4" poster="/ink-poster.jpg" length="360vh" preload="eager"
-          overlay="linear-gradient(180deg, rgba(0,0,0,.35), rgba(0,0,0,.55))">
+    <Reel src="/ocean.mp4" poster="/ocean-poster.jpg" length="360vh" preload="eager">
       <div style={{ position: "sticky", top: 0, height: "100vh", display: "grid", placeItems: "center" }}>
         <Reveal from={0.06} to={0.34}><h1>Sayantan Bhowmik</h1></Reveal>
-        <Reveal from={0.4} to={0.7}><p>AI agent infrastructure</p></Reveal>
+        <Reveal from={0.42} to={0.72}><p>AI agent infrastructure</p></Reveal>
       </div>
     </Reel>
   );
 }
 ```
 
-`useScrollProgress()` returns live progress `0..1` anywhere inside a `<Reel>`.
+`useScrollProgress()` returns the live progress from 0 to 1 anywhere inside a `Reel`.
 
-## Any site (no framework)
+## Use it on any site, no framework
 
 ```html
 <link rel="stylesheet" href="reel/dist/styles.css" />
@@ -72,7 +87,7 @@ export default function Hero() {
 <div data-reel-track style="height: 360vh">
   <div class="reel-stage">
     <video data-reel-video data-reel-preload="eager"
-           src="ink.mp4" poster="ink-poster.jpg" muted playsinline></video>
+           src="ocean.mp4" poster="ocean-poster.jpg" muted playsinline></video>
     <div class="reel-overlay" style="background: rgba(0,0,0,.4)"></div>
   </div>
   <div class="reel-content">
@@ -86,9 +101,9 @@ export default function Hero() {
 </script>
 ```
 
-## Preparing the film (important)
+## Preparing a clip by hand
 
-Smooth scrubbing needs a video encoded with **dense keyframes** — ideally all-intra (every frame a keyframe). Progressive playback files (sparse keyframes) stutter when you seek between them. Re-encode any clip with ffmpeg:
+If you would rather encode it yourself, the important part is dense keyframes so seeks land instantly:
 
 ```bash
 ffmpeg -i source.mp4 -an -vf "scale=1280:-2" \
@@ -97,26 +112,11 @@ ffmpeg -i source.mp4 -an -vf "scale=1280:-2" \
   -movflags +faststart film.mp4
 ```
 
-- `-g 1 -x264-params keyint=1` → every frame seekable.
-- `-movflags +faststart` → metadata at the front for fast start.
-- `-an` → drop audio (a scrubbed film is silent).
-- Keep it hero-sized (a few MB). Serve it from a host that supports HTTP **Range** requests (most CDNs do; Python's `http.server` does **not**).
-
-## API
-
-| Export | What it is |
-| --- | --- |
-| `Reel` | React component: pins the film, defines the scroll length, hosts content. |
-| `Reveal` | React component: fades + rises children across a `[from, to]` progress window. |
-| `useScrollProgress()` | React hook: live progress `0..1`. |
-| `createReel(opts)` | Core: wire a `track` + `video`, returns a handle (`progress`, `onProgress`, `refresh`, `destroy`). |
-| `createReveals(specs)` | Core: build an updater for `[from,to]` element reveals. |
-| `preloadFilm(video, src)` | Core: fetch the film into a blob for instant seeking. |
-| `auto(root?)` | Core: wire everything declaratively from `data-reel-*` attributes. |
+Keep it hero sized, a few MB, and serve it from a host that supports HTTP range requests (most do).
 
 ## Demo asset
 
-`examples/assets/ink-720.mp4` is ["Colored ink in water"](https://www.pexels.com/) from Pexels (free to use, no attribution required — credited anyway). Swap in your own clip with `reel prepare`.
+`examples/assets/ink-720.mp4` is a free clip from Pexels. Swap in your own with `reel prepare`.
 
 ## License
 

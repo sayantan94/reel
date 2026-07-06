@@ -6,7 +6,24 @@
 
 <p align="center">Turn any page into a film you scrub by scrolling.</p>
 
+<p align="center">
+  <img src="assets/demo.gif" width="520" alt="reel scrubbing an ink in water film back and forth" />
+</p>
+
 A full bleed video sits pinned behind your content and its timeline follows the scroll. Scroll down and the film plays forward, scroll up and it rewinds. Pin headlines and copy so they bloom in as the film unspools.
+
+## Live examples
+
+Three demos live in `examples/`, each self contained: **Hero** (a headline that blooms in over the film), **Story** (several lines that fade in and out on their own cue), and **Minimal** (just the scrub background).
+
+Run them locally:
+
+```bash
+npx serve examples
+# open the printed url
+```
+
+Or deploy the `examples/` folder to any static host. On Vercel, set the project root directory to `examples` and it serves as a live demo, no build step.
 
 * Framework free core plus a React layer.
 * Around 2 KB of logic, zero dependencies.

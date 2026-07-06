@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>reel · minimal</title>
+<link rel="stylesheet" href="reel.css" />
+<style>
+  * { margin:0; box-sizing:border-box; }
+  body { background:#0f0f17; color:#f3efe2; font-family:ui-sans-serif,system-ui,sans-serif; }
+  .cap { position:fixed; bottom:20px; left:0; right:0; text-align:center; font:600 11px ui-monospace,monospace; letter-spacing:.22em; text-transform:uppercase; opacity:.55; z-index:5; }
+  .home { position:fixed; top:18px; left:20px; z-index:6; font:600 12px ui-monospace,monospace; color:#f3efe2; text-decoration:none; opacity:.7; }
+</style>
+</head>
+<body>
+  <a class="home" href="index.html">← examples</a>
+  <div class="reel-track" data-reel-track style="height:300vh;">
+    <div class="reel-stage">
+      <video class="reel-video" data-reel-video data-reel-preload="eager"
+             src="assets/ink-720.mp4" poster="assets/ink-poster.jpg" muted playsinline></video>
+    </div>
+    <div class="reel-content"></div>
+  </div>
+  <div class="cap">reel · background only, no copy — scroll to scrub</div>
+  <script type="module">
+    import { auto } from "./reel.core.js";
+    auto();
+  </script>
+</body>
+</html>

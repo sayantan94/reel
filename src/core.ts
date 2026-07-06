@@ -166,27 +166,37 @@ export function createReel(options: ReelOptions): ReelHandle {
   };
 }
 
-/** A reveal bound to a [from, to] progress window. */
+/** A reveal bound to a [from, to] progress window, with optional fade out. */
 export interface RevealSpec {
   el: HTMLElement;
   from: number;
   to: number;
+  /** Optional: start fading back out at this progress. */
+  outFrom?: number;
+  /** Optional: fully gone by this progress. */
+  outTo?: number;
   /** translateY in px at progress = from, easing to 0 at `to`. Default 24. */
   rise?: number;
 }
 
 /**
  * Drive opacity/transform on elements as progress crosses their window.
+ * With outFrom/outTo the element also fades back out, so lines can swap.
  * Call the returned updater with progress (e.g. from reel.onProgress).
  */
 export function createReveals(specs: RevealSpec[]): (progress: number) => void {
   return (progress: number) => {
     for (const s of specs) {
-      const span = Math.max(0.0001, s.to - s.from);
-      const local = clamp01((progress - s.from) / span);
+      const inSpan = Math.max(0.0001, s.to - s.from);
+      const inLocal = clamp01((progress - s.from) / inSpan);
+      let out = 1;
+      if (s.outFrom != null && s.outTo != null) {
+        const outSpan = Math.max(0.0001, s.outTo - s.outFrom);
+        out = 1 - clamp01((progress - s.outFrom) / outSpan);
+      }
       const rise = s.rise ?? 24;
-      s.el.style.opacity = String(local);
-      s.el.style.transform = `translateY(${(1 - local) * rise}px)`;
+      s.el.style.opacity = String(inLocal * out);
+      s.el.style.transform = `translateY(${(1 - inLocal) * rise}px)`;
     }
   };
 }
@@ -205,9 +215,10 @@ export function auto(root: ParentNode = document): ReelHandle | null {
 
   const reveals: RevealSpec[] = [];
   root.querySelectorAll<HTMLElement>("[data-reel-reveal]").forEach((el) => {
-    const [from, to] = (el.dataset.reelReveal ?? "0,1").split(",").map(Number);
+    // "in,in" fades in and holds; "in,in,out,out" also fades back out.
+    const n = (el.dataset.reelReveal ?? "0,1").split(",").map(Number);
     const rise = el.dataset.reelRise ? Number(el.dataset.reelRise) : undefined;
-    reveals.push({ el, from: from || 0, to: to || 1, rise });
+    reveals.push({ el, from: n[0] || 0, to: n[1] ?? 1, outFrom: n[2], outTo: n[3], rise });
   });
 
   // Opt-in blob preload for reliable, stutter-free scrubbing: data-reel-preload="eager"

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>reel · examples</title>
+<style>
+  :root { --ink:#0f0f17; --paper:#f3efe2; --muted:#8a8aa0; --accent:#f0663b; --card:#17171f; --border:#26262f; }
+  * { margin:0; box-sizing:border-box; }
+  body { background:var(--ink); color:var(--paper); font-family:ui-sans-serif,system-ui,-apple-system,sans-serif; }
+  .wrap { max-width:920px; margin:0 auto; padding:12vh 24px 16vh; }
+  .logo { width:64px; height:64px; }
+  h1 { font-size:clamp(40px,8vw,72px); letter-spacing:-.03em; margin-top:20px; }
+  .tag { color:var(--muted); font-size:18px; margin-top:12px; max-width:52ch; line-height:1.5; }
+  .grid { margin-top:56px; display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:18px; }
+  a.card { display:block; text-decoration:none; color:inherit; border:1px solid var(--border); border-radius:16px; overflow:hidden; background:var(--card); transition:border-color .2s, transform .2s; }
+  a.card:hover { border-color:var(--accent); transform:translateY(-3px); }
+  .thumb { aspect-ratio:16/10; width:100%; object-fit:cover; display:block; background:#000; }
+  .meta { padding:16px 18px; }
+  .meta h2 { font-size:17px; font-family:ui-monospace,monospace; }
+  .meta p { color:var(--muted); font-size:14px; margin-top:6px; line-height:1.5; }
+  .foot { margin-top:56px; color:var(--muted); font-size:14px; }
+  .foot a { color:var(--accent); }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <img class="logo" src="logo.svg" alt="reel" />
+    <h1>reel</h1>
+    <p class="tag">Turn any page into a film you scrub by scrolling. Scroll each live example below.</p>
+
+    <div class="grid">
+      <a class="card" href="hero.html">
+        <img class="thumb" src="assets/ink-poster.jpg" alt="" />
+        <div class="meta"><h2>Hero</h2><p>Full screen film with a headline that blooms in on scroll.</p></div>
+      </a>
+      <a class="card" href="story.html">
+        <img class="thumb" src="assets/dye-poster.jpg" alt="" />
+        <div class="meta"><h2>Story</h2><p>Several lines revealed at different points along the film.</p></div>
+      </a>
+      <a class="card" href="minimal.html">
+        <img class="thumb" src="assets/ink-poster.jpg" alt="" />
+        <div class="meta"><h2>Minimal</h2><p>Just the scrub background, no copy. Drop it behind anything.</p></div>
+      </a>
+    </div>
+
+    <p class="foot">Source and docs: <a href="https://github.com/sayantan94/reel">github.com/sayantan94/reel</a></p>
+  </div>
+</body>
+</html>

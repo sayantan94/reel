@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>reel · story</title>
+<link rel="stylesheet" href="reel.css" />
+<style>
+  :root { --ink:#0b0b12; --paper:#f3efe2; --accent:#c9f04d; }
+  * { margin:0; box-sizing:border-box; }
+  body { background:var(--ink); color:var(--paper); font-family:ui-sans-serif,system-ui,sans-serif; }
+  .stagearea { position:sticky; top:0; height:100vh; padding:0 9vw; pointer-events:none; }
+  .line { position:absolute; left:9vw; right:9vw; }
+  .top { top:16vh; }
+  .mid { top:44vh; }
+  .bot { top:72vh; }
+  .kicker { font-family:ui-monospace,monospace; font-size:12px; letter-spacing:.3em; text-transform:uppercase; opacity:.85; }
+  h1 { font-size:clamp(36px,7vw,88px); line-height:1; font-weight:800; letter-spacing:-.03em; }
+  h1 .a { color:var(--accent); }
+  p { max-width:40ch; font-size:clamp(16px,2vw,21px); line-height:1.5; }
+  .cue { position:fixed; bottom:22px; left:50%; transform:translateX(-50%); font:600 11px ui-monospace,monospace; letter-spacing:.2em; text-transform:uppercase; opacity:.6; }
+  .home { position:fixed; top:18px; left:20px; z-index:6; font:600 12px ui-monospace,monospace; color:var(--paper); text-decoration:none; opacity:.7; }
+</style>
+</head>
+<body>
+  <a class="home" href="index.html">← examples</a>
+  <div class="reel-track" data-reel-track style="height:520vh;">
+    <div class="reel-stage">
+      <video class="reel-video" data-reel-video data-reel-preload="eager"
+             src="assets/dye.mp4" poster="assets/dye-poster.jpg" muted playsinline></video>
+      <div class="reel-overlay" style="background:linear-gradient(180deg,rgba(11,11,18,.55),rgba(11,11,18,.25) 45%,rgba(11,11,18,.7));"></div>
+    </div>
+    <div class="reel-content">
+      <div class="stagearea">
+        <div class="line top" data-reel-reveal="0.03,0.12,0.9,0.98"><p class="kicker">reel · story</p></div>
+        <div class="line mid" data-reel-reveal="0.14,0.30,0.36,0.46" data-reel-rise="40"><h1>Reveal each line<br>on its own <span class="a">cue</span>.</h1></div>
+        <div class="line mid" data-reel-reveal="0.48,0.62,0.68,0.78" data-reel-rise="40"><h1>Scroll keeps<br>the <span class="a">pace</span>.</h1></div>
+        <div class="line bot" data-reel-reveal="0.80,0.92"><p>Pin any element to a start and end between 0 and 1. Add two more numbers and it fades back out, so lines swap.</p></div>
+      </div>
+    </div>
+  </div>
+  <div class="cue">scroll ↓</div>
+  <script type="module">
+    import { auto } from "./reel.core.js";
+    auto();
+  </script>
+</body>
+</html>

@@ -311,6 +311,7 @@
   .card { display:block; overflow:hidden; color:var(--ink); }
   .card:hover { border-color:var(--accent); text-decoration:none; }
   .thumb { display:block; width:100%; aspect-ratio:16/10; object-fit:cover; background:#120d14; }
+  .thumb-code { display:flex; align-items:center; justify-content:center; color:var(--signal); font:800 13px ui-monospace,monospace; }
   .cardmeta { padding:13px 14px; }
   .cardmeta p { font-size:13.5px; margin-top:4px; }
   .quality .preset { display:flex; align-items:center; justify-content:space-between; gap:10px; }
@@ -373,7 +374,7 @@
       <a href="#overview">Overview</a>
       <a href="#workflow">Workflow</a>
       <a href="#architecture">Architecture</a>
-      <a href="#showcase">Example</a>
+      <a href="#examples">Examples</a>
       <a href="#quality">Output quality</a>
       <a href="#quickstart">Quickstart</a>
     </div>
@@ -383,7 +384,10 @@
       <a href="#core">Core API</a>
     </div>
     <div class="navgroup"><div class="label">Demos</div>
-      <a href="pexels.html">Prepared full-video</a>
+      <a href="pexels.html">Color water (prepared)</a>
+      <a href="hero.html">Hero</a>
+      <a href="color.html">Color</a>
+      <a href="cosmos.html">Cosmos</a>
       <a href="minimal.html">Minimal</a>
     </div>
   </nav>
@@ -446,15 +450,15 @@
       <div class="formula">video.currentTime = scrollProgress * video.duration</div>
     </section>
 
-    <section id="showcase">
-      <h2>Actual prepared example</h2>
-      <p>A separate campaign-style page uses the same framework with a real CLI-generated color-water MP4 as the full-screen background.</p>
+    <section id="examples">
+      <h2>Examples</h2>
+      <p>Each demo is one film scrubbed by scroll. The featured page runs the actual CLI-prepared color-water MP4; the others show reveal and layout patterns on their own footage.</p>
       <a class="showcase-card" href="pexels.html">
         <img src="assets/color-water-poster.jpg" alt="" />
         <div class="showcase-copy">
           <div class="label">Prepared asset</div>
           <h3>Color water motion page</h3>
-          <p>Open it when you want to see the framework used as a visual brand page, not documentation.</p>
+          <p>A campaign-style page built on the real CLI-generated asset. Open it to see the framework as a brand page, not documentation.</p>
           <div class="proof">
             <div><strong>10s</strong><span>generated clip</span></div>
             <div><strong>1080p</strong><span>balanced encode</span></div>
@@ -462,6 +466,12 @@
           </div>
         </div>
       </a>
+      <div class="examples">
+        <a class="card" href="hero.html"><img class="thumb" src="assets/ink-poster.jpg" alt="" /><div class="cardmeta"><h3>Hero</h3><p>Reveal choreography over an orange ink film.</p></div></a>
+        <a class="card" href="color.html"><img class="thumb" src="assets/smoke-poster.jpg" alt="" /><div class="cardmeta"><h3>Color</h3><p>Centered copy over pink-and-blue ink.</p></div></a>
+        <a class="card" href="cosmos.html"><img class="thumb" src="assets/nebula-poster.jpg" alt="" /><div class="cardmeta"><h3>Cosmos</h3><p>A nebula timelapse you drive by scrolling.</p></div></a>
+        <a class="card" href="minimal.html"><span class="thumb thumb-code"><code>&lt;video data-reel-video&gt;</code></span><div class="cardmeta"><h3>Minimal</h3><p>The prepared film with zero page around it.</p></div></a>
+      </div>
     </section>
 
     <section id="quality">
@@ -500,15 +510,6 @@ npx reel-it prepare ./raw/downloaded-clip.mp4 \
       length=<span class="s">"420vh"</span> preload=<span class="s">"eager"</span> seek=<span class="s">"precise"</span>&gt;
   &lt;section&gt;Static page content over the moving background&lt;/section&gt;
 &lt;/Reel&gt;</pre>
-    </section>
-
-    <section id="examples">
-      <h2>Examples</h2>
-      <p>Two useful baselines: a polished motion page and a bare background-only page.</p>
-      <div class="examples">
-        <a class="card" href="pexels.html"><img class="thumb" src="assets/color-water-poster.jpg" alt="" /><div class="cardmeta"><h3>Color water</h3><p>Full-screen motion page.</p></div></a>
-        <a class="card" href="minimal.html"><img class="thumb" src="assets/ink2-poster.jpg" alt="" /><div class="cardmeta"><h3>Minimal</h3><p>Only the scrubbed film.</p></div></a>
-      </div>
     </section>
 
     <section id="react">

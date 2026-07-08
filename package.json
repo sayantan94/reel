@@ -1,10 +1,22 @@
 {
-  "name": "reel",
-  "version": "0.1.0",
+  "name": "reel-it",
+  "version": "1.0.0",
   "description": "Turn any page into a film you scrub by scrolling. A fixed full-bleed video background whose timeline is driven by scroll, plus scroll-pinned content reveals. Framework-agnostic core + React API.",
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sayantan94/reel.git"
+  },
+  "homepage": "https://github.com/sayantan94/reel#readme",
+  "bugs": {
+    "url": "https://github.com/sayantan94/reel/issues"
+  },
+  "engines": {
+    "node": ">=18"
+  },
   "bin": {
-    "reel": "./bin/reel.mjs"
+    "reel": "bin/reel.mjs",
+    "reel-it": "bin/reel.mjs"
   },
   "main": "./dist/index.js",
   "module": "./dist/index.js",
@@ -20,13 +32,24 @@
     },
     "./styles.css": "./dist/styles.css"
   },
-  "files": ["dist", "bin"],
-  "sideEffects": ["*.css"],
+  "files": [
+    "dist",
+    "bin"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "sideEffects": [
+    "*.css"
+  ],
   "scripts": {
-    "build": "npm run build:ts && npm run build:css",
+    "build": "npm run build:ts && npm run build:css && npm run build:examples",
     "build:ts": "tsc",
     "build:css": "cp src/styles.css dist/styles.css",
-    "dev": "tsc --watch"
+    "build:examples": "cp dist/core.js examples/reel.core.js && cp dist/styles.css examples/reel.css",
+    "dev": "tsc --watch",
+    "pack:check": "npm run build && npm pack --dry-run",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "scroll",
@@ -45,8 +68,12 @@
     "react-dom": ">=18"
   },
   "peerDependenciesMeta": {
-    "react": { "optional": true },
-    "react-dom": { "optional": true }
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/react": "^19.0.0",

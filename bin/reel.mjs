@@ -2,7 +2,7 @@
 /**
  * reel — take any video and create a scroll-scrub background.
  *
- *   npx reel prepare <input.mp4 | https://…> [options]
+ *   npx reel-it prepare <input.mp4 | https://…> [options]
  *
  * Ingests a video (local path or URL), re-encodes it all-intra (every frame
  * seekable → glassy scrubbing), extracts a poster, and writes a self-contained
@@ -13,13 +13,14 @@
  * page URL (fetched via yt-dlp — grab a short segment with --start/--seconds).
  *
  * Options:
- *   --out <dir>     output directory            (default ./reel-out)
- *   --name <base>   asset basename              (default the input's name)
- *   --height <px>   scale to this height        (default 1080)
- *   --crf <n>       quality, lower = better/bigger (default 26)
- *   --start <sec>   segment start (page URLs)   (default 0)
- *   --seconds <n>   segment length (page URLs)  (default 20)
- *   --no-preview    skip writing preview.html
+ *   --out <dir>       output directory              (default ./reel-out)
+ *   --name <base>     asset basename                (default the input's name)
+ *   --quality <name>  small | balanced | sharp      (default balanced)
+ *   --height <px>     override preset scale height
+ *   --crf <n>         override preset quality; lower = sharper/bigger
+ *   --start <sec>     segment start                 (default 0 for page URLs)
+ *   --seconds <n>     segment length                (default 20 for page URLs)
+ *   --no-preview      skip writing preview.html
  */
 import { spawn } from "node:child_process";
 import { mkdir, writeFile, rm, copyFile } from "node:fs/promises";
@@ -29,6 +30,11 @@ import { fileURLToPath } from "node:url";
 import { tmpdir } from "node:os";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
+const QUALITY = {
+  small: { height: 720, crf: 26, preset: "medium" },
+  balanced: { height: 1080, crf: 22, preset: "slow" },
+  sharp: { height: 1440, crf: 18, preset: "slow" },
+};
 
 function parseArgs(argv) {
   const args = { _: [] };
@@ -61,7 +67,13 @@ function hasBin(cmd, flag = "-version") {
 const hasFfmpeg = () => hasBin("ffmpeg");
 
 async function download(url, dest) {
-  const res = await fetch(url);
+  const res = await fetch(url, {
+    headers: {
+      "accept": "video/mp4,video/*;q=0.9,*/*;q=0.8",
+      "accept-language": "en-US,en;q=0.9",
+      "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36",
+    },
+  });
   if (!res.ok) throw new Error(`download failed: HTTP ${res.status}`);
   await writeFile(dest, Buffer.from(await res.arrayBuffer()));
 }
@@ -69,6 +81,12 @@ async function download(url, dest) {
 /** A page URL we can't fetch as a file directly — needs yt-dlp. */
 function isPageUrl(u) {
   return /youtube\.com|youtu\.be|vimeo\.com|tiktok\.com|twitter\.com|x\.com|instagram\.com/i.test(u);
+}
+
+/** Convert a normal Pexels video page to its direct download endpoint. */
+function pexelsDownloadUrl(u) {
+  const match = u.match(/pexels\.com\/video\/[^/?#]*-(\d+)\/?/i);
+  return match ? `https://www.pexels.com/download/video/${match[1]}/` : null;
 }
 
 /** Download a bounded segment of a streaming-site video via yt-dlp. */
@@ -93,16 +111,16 @@ const PREVIEW = (mp4, poster) => `<!doctype html>
 <title>reel preview</title>
 <style>
   *{margin:0;box-sizing:border-box}
-  body{background:#0f0f17;color:#f3efe2;font-family:ui-sans-serif,system-ui,sans-serif}
+  body{background:#07080d;color:#f6f4ee;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
   .track{position:relative;height:360vh}
   .stage{position:sticky;top:0;height:100vh;overflow:hidden}
-  video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-  .overlay{position:absolute;inset:0;background:linear-gradient(180deg,rgba(15,15,23,.35),rgba(15,15,23,.15) 40%,rgba(15,15,23,.55))}
+  video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:none;transform:translateZ(0);backface-visibility:hidden}
+  .overlay{position:absolute;inset:0;background:linear-gradient(90deg,rgba(7,8,13,.68),rgba(7,8,13,.22) 48%,rgba(7,8,13,.06))}
   .content{position:relative;z-index:1;margin-top:-100vh}
-  .copy{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;justify-content:center;padding:0 8vw;pointer-events:none}
-  h1{font-size:clamp(48px,11vw,150px);line-height:.92;font-weight:800;letter-spacing:-.03em}
-  p.l{max-width:34ch;font-size:clamp(16px,2vw,22px);line-height:1.5;margin-top:1rem}
-  .cue{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);font:600 11px ui-monospace,monospace;letter-spacing:.2em;text-transform:uppercase;opacity:.6}
+  .copy{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;justify-content:center;padding:0 7vw;pointer-events:none}
+  h1{max-width:9ch;font-size:clamp(48px,10vw,132px);line-height:.94;font-weight:850;letter-spacing:0}
+  p.l{max-width:36ch;font-size:clamp(16px,1.8vw,21px);line-height:1.48;margin-top:1rem;color:rgba(246,244,238,.82)}
+  .cue{position:fixed;right:22px;bottom:20px;font:700 11px ui-monospace,monospace;letter-spacing:.14em;text-transform:uppercase;opacity:.72}
 </style></head>
 <body>
   <div class="track" data-reel-track>
@@ -128,8 +146,8 @@ const SNIPPET = (mp4, poster) => `
 Done. Use it:
 
 React —
-  import { Reel, Reveal } from "reel";
-  import "reel/styles.css";
+  import { Reel, Reveal } from "reel-it";
+  import "reel-it/styles.css";
 
   <Reel src="/${mp4}" poster="/${poster}" length="360vh" preload="eager">
     <div style={{position:"sticky",top:0,height:"100vh",display:"grid",placeItems:"center"}}>
@@ -145,7 +163,7 @@ async function main() {
   const cmd = args._[0] === "prepare" ? args._.slice(1) : args._;
   const input = cmd[0];
   if (!input) {
-    console.log("usage: reel prepare <input.mp4 | https://…> [--out dir] [--height 1080] [--crf 26] [--name base] [--no-preview]");
+    console.log("usage: reel prepare <input.mp4 | https://…> [--out dir] [--quality balanced|sharp|small] [--height 1080] [--crf 22] [--name base] [--no-preview]");
     process.exit(input === undefined ? 1 : 0);
   }
   if (!(await hasFfmpeg())) {
@@ -154,22 +172,30 @@ async function main() {
   }
 
   const outDir = resolve(args.out ?? "reel-out");
-  const height = Number(args.height ?? 1080);
-  const crf = Number(args.crf ?? 26);
+  const quality = args.quality ?? "balanced";
+  const preset = QUALITY[quality];
+  if (!preset) {
+    console.error(`reel: unknown quality "${quality}". Use small, balanced, or sharp.`);
+    process.exit(1);
+  }
+  const height = Number(args.height ?? preset.height);
+  const crf = Number(args.crf ?? preset.crf);
   const preview = args.preview !== false;
-  const isUrl = /^https?:\/\//.test(input);
+  const resolvedInput = pexelsDownloadUrl(input) ?? input;
+  const isUrl = /^https?:\/\//.test(resolvedInput);
+  const pageUrl = isUrl && isPageUrl(resolvedInput);
   const base = (args.name ?? (basename(input, extname(input)) || "film")).replace(/[^a-z0-9_-]+/gi, "-");
 
   await mkdir(outDir, { recursive: true });
 
-  let source = input;
+  let source = resolvedInput;
   let tmp;
-  if (isUrl && isPageUrl(input)) {
+  if (pageUrl) {
     const start = args.start ?? 0;
     const seconds = args.seconds ?? 20;
     tmp = join(tmpdir(), `reel-src-${base}.mp4`);
     process.stderr.write(`• fetching ${seconds}s segment (from ${start}s) via yt-dlp… `);
-    await fetchViaYtDlp(input, tmp, start, seconds);
+    await fetchViaYtDlp(resolvedInput, tmp, start, seconds);
     source = tmp;
     process.stderr.write("done\n");
   } else if (isUrl) {
@@ -185,12 +211,16 @@ async function main() {
 
   const mp4 = `${base}.mp4`;
   const poster = `${base}-poster.jpg`;
+  const trimArgs = [];
+  if (!pageUrl && args.start != null) trimArgs.push("-ss", String(args.start));
+  if (!pageUrl && args.seconds != null) trimArgs.push("-t", String(args.seconds));
 
-  process.stderr.write("• encoding all-intra (every frame seekable)… ");
+  process.stderr.write(`• encoding ${quality} all-intra (${height}px, crf ${crf})… `);
   await run("ffmpeg", [
-    "-y", "-i", source, "-an",
-    "-vf", `scale=-2:${height}`,
+    "-y", ...trimArgs, "-i", source, "-an",
+    "-vf", `scale=-2:${height}:flags=lanczos`,
     "-c:v", "libx264", "-profile:v", "high", "-pix_fmt", "yuv420p",
+    "-preset", preset.preset,
     "-g", "1", "-x264-params", "keyint=1:scenecut=0",
     "-crf", String(crf), "-movflags", "+faststart",
     join(outDir, mp4),
@@ -198,7 +228,7 @@ async function main() {
   process.stderr.write("done\n");
 
   process.stderr.write("• extracting poster… ");
-  await run("ffmpeg", ["-y", "-i", join(outDir, mp4), "-frames:v", "1", "-q:v", "3", join(outDir, poster)]);
+  await run("ffmpeg", ["-y", "-i", join(outDir, mp4), "-frames:v", "1", "-q:v", "2", join(outDir, poster)]);
   process.stderr.write("done\n");
 
   if (preview) {

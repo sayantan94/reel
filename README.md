@@ -2,165 +2,261 @@
   <img src="assets/logo.svg" width="112" alt="reel" />
 </p>
 
-<h1 align="center">reel</h1>
+<h1 align="center">reel-it</h1>
 
 <p align="center">Turn any page into a film you scrub by scrolling.</p>
 
 <p align="center">
-  <img src="assets/demo.gif" width="520" alt="reel scrubbing an ink in water film back and forth" />
+  <img src="examples/demo.gif" width="520" alt="reel scrubbing a film background by scroll" />
 </p>
 
-A full bleed video sits pinned behind your content and its timeline follows the scroll. Scroll down and the film plays forward, scroll up and it rewinds. Pin headlines and copy so they bloom in as the film unspools.
+reel-it pins a full-bleed video behind your page and maps scroll progress to the video's timeline. Scroll down and the film moves forward. Scroll up and it rewinds. Content can fade in at exact points on that same timeline.
 
-## Live examples
+## The Mental Model
 
-Three demos live in `examples/`, each self contained: **Hero** (a headline that blooms in over the film), **Story** (several lines that fade in and out on their own cue), and **Minimal** (just the scrub background).
+Every reel has five pieces:
 
-Run them locally:
+1. **Clip** - an MP4 encoded for seeking. For crisp scrubbing, every frame should be a keyframe.
+2. **Track** - a tall wrapper, such as `height: 360vh`. This is the scroll distance.
+3. **Stage** - a sticky, full-screen layer that holds the video while the track scrolls.
+4. **Content** - headings, copy, or UI that sits over the stage.
+5. **Reveals** - optional progress windows, such as `0.10 -> 0.35`, that fade content in as the film reaches that point.
+
+The core formula is:
+
+```txt
+progress = clamp(-track.top / (track.height - viewport.height), 0, 1)
+video.currentTime = progress * video.duration
+```
+
+Everything else is a wrapper around that idea.
+
+## Quickstart
 
 ```bash
-npx serve examples
-# open the printed url
+npm install reel-it
+
+npx reel-it prepare ./raw/color-water.mp4 \
+  --seconds 10 --quality balanced --name color-water
+
+npx reel-it prepare "https://www.pexels.com/video/colorful-tropical-fish-swimming-in-aquarium-36004282/" \
+  --seconds 10 --quality balanced --name tropical-fish
+
+npx reel-it prepare "https://www.pexels.com/video/high-speed-photography-of-colorful-ink-diffusion-in-water-9669111/" \
+  --seconds 10 --quality balanced --name color-ink
+
+npx reel-it prepare "https://www.pexels.com/video/washing-a-paint-brush-on-a-glass-of-water-3795829/" \
+  --seconds 10 --quality balanced --name paint-brush
 ```
-
-Or deploy the `examples/` folder to any static host. On Vercel, set the project root directory to `examples` and it serves as a live demo, no build step.
-
-* Framework free core plus a React layer.
-* Around 2 KB of logic, zero dependencies.
-* Smooth scrubbing via a request animation frame loop with lerp easing.
-* One command to turn any clip into a scrub ready background.
-
-## How it works
-
-reel does three things:
-
-1. It pins your video full screen behind the page.
-2. It maps the scroll position onto the video playback time, so the film becomes a timeline you scrub. Scroll down and it moves forward, scroll up and it goes back.
-3. It reveals content you pin to a progress window, so a headline can fade in exactly when the film reaches a certain moment.
-
-The scroll length you give it (for example `360vh`) is the whole film. A page that scrolls three and a half screens plays the entire clip from start to finish.
-
-## How to use it
-
-1. **Prepare a clip.** Run `npx reel prepare your_video.mp4`. You get a web ready `your_video.mp4` (re encoded so every frame is seekable), a poster image, and a `preview.html` to check it.
-2. **Drop the files into your site**, for example into `public/`.
-3. **Add reel and point it at the clip.** Use the `Reel` component in React, or the `data-reel` markup on any site. Set `length` to how long you want the scroll to be.
-4. **Pin your content.** Wrap headlines in `Reveal` (React) or `data-reel-reveal="start,end"` (HTML) with a start and end between 0 and 1, and they fade in as the film reaches that point.
-
-The three usage examples below show each path.
-
-## Use it locally
-
-reel is not on npm yet, so use it straight from the clone.
-
-```bash
-git clone https://github.com/sayantan94/reel.git
-cd reel
-npm install
-npm run build
-```
-
-**Try the demo.** It needs a server that supports HTTP range requests (a plain file open will not scrub), so serve the folder:
-
-```bash
-npx serve .
-# then open the printed url at /examples/demo
-```
-
-**Turn any video into a background** with the CLI, run straight from the clone:
-
-```bash
-node bin/reel.mjs prepare ./my_clip.mp4
-node bin/reel.mjs prepare "https://www.youtube.com/watch?v=ID" --start 60 --seconds 20
-node bin/reel.mjs prepare ./ocean.mp4 --height 1080 --crf 24 --out public/hero
-```
-
-**Use it inside another local project.** Install it by path, or link it:
-
-```bash
-# from your project, point at the clone
-npm install /path/to/reel
-
-# or link it, so edits in reel show up live
-cd /path/to/reel && npm link
-cd /path/to/your-project && npm link reel
-```
-
-Then import it as shown below. Once it is published, all of this becomes `npm install reel` and `npx reel prepare`.
-
-## Take any video and create a background
-
-Give `reel` any clip (a local file, a direct URL, or a YouTube link) and it builds a scrub ready background: it re encodes the clip so every frame is a keyframe (that is what makes scrubbing smooth), pulls a poster, and writes a `preview.html` you can open to see it. From the clone, call it with `node bin/reel.mjs prepare` (or plain `reel prepare` once linked or published).
-
-Flags: `--out <dir>`, `--name <base>`, `--height <px>`, `--crf <n>`, `--start <sec>`, `--seconds <n>`, `--no_preview`. Needs `ffmpeg` on your PATH (and `yt-dlp` for streaming links).
-
-Output:
-
-```
-ok background ready in reel-out/
-  my_clip.mp4        every frame seekable, web optimised, silent
-  my_clip-poster.jpg
-  preview.html       open to watch the background
-```
-
-## Use it in React
 
 ```tsx
-import { Reel, Reveal } from "reel";
-import "reel/styles.css";
+import { Reel, Reveal } from "reel-it";
+import "reel-it/styles.css";
 
 export default function Hero() {
   return (
-    <Reel src="/ocean.mp4" poster="/ocean-poster.jpg" length="360vh" preload="eager">
+    <Reel
+      src="/color-water.mp4"
+      poster="/color-water-poster.jpg"
+      length="360vh"
+      preload="eager"
+      overlay="rgba(0,0,0,.28)"
+    >
       <div style={{ position: "sticky", top: 0, height: "100vh", display: "grid", placeItems: "center" }}>
-        <Reveal from={0.06} to={0.34}><h1>Sayantan Bhowmik</h1></Reveal>
-        <Reveal from={0.42} to={0.72}><p>AI agent infrastructure</p></Reveal>
+        <Reveal from={0.08} to={0.32}>
+          <h1>Scroll is the timeline</h1>
+        </Reveal>
       </div>
     </Reel>
   );
 }
 ```
 
-`useScrollProgress()` returns the live progress from 0 to 1 anywhere inside a `Reel`.
+Serve the page from a real HTTP server. Video scrubbing depends on normal browser video loading and HTTP range requests; opening the HTML file directly is not a reliable test.
 
-## Use it on any site, no framework
+## Prepare A Crisp Clip
+
+Most videos are encoded with sparse keyframes, which makes random seeks lag or smear. `reel-it prepare` re-encodes the clip as all-intra H.264 so each frame is directly seekable.
+
+```bash
+npx reel-it prepare ./ocean.mov
+npx reel-it prepare ./ocean.mov --quality sharp
+npx reel-it prepare ./ocean.mov --height 1440 --crf 18 --out public/ocean
+npx reel-it prepare "https://www.youtube.com/watch?v=ID" --start 60 --seconds 12 --quality balanced
+npx reel-it prepare "https://www.pexels.com/video/colorful-tropical-fish-swimming-in-aquarium-36004282/" --seconds 10 --quality balanced --name tropical-fish
+npx reel-it prepare "https://www.pexels.com/video/high-speed-photography-of-colorful-ink-diffusion-in-water-9669111/" --seconds 10 --quality balanced --name color-ink
+npx reel-it prepare "https://www.pexels.com/video/washing-a-paint-brush-on-a-glass-of-water-3795829/" --seconds 10 --quality balanced --name paint-brush
+```
+
+If Pexels blocks command-line download for a page URL, download the video in the browser and run `reel-it prepare` on the local file:
+
+```bash
+npx reel-it prepare ./tropical-fish.mp4 --seconds 10 --quality balanced --name tropical-fish
+npx reel-it prepare ./color-ink.mp4 --seconds 10 --quality balanced --name color-ink
+npx reel-it prepare ./paint-brush.mp4 --seconds 10 --quality balanced --name paint-brush
+```
+
+Quality presets:
+
+| Preset | Height | CRF | Use it for |
+| --- | ---: | ---: | --- |
+| `small` | 720 | 26 | quick tests and small backgrounds |
+| `balanced` | 1080 | 22 | the default, good hero quality |
+| `sharp` | 1440 | 18 | crisp demos and portfolio pages |
+
+Lower CRF means sharper output and larger files. All-intra video is always larger than normal delivery video, so keep clips short and use `preload="eager"` only for hero-sized assets that can fit comfortably in memory.
+
+Output:
+
+```txt
+reel-out/
+  ocean.mp4
+  ocean-poster.jpg
+  preview.html
+  reel.core.js
+```
+
+The generated `preview.html` is intentionally plain so you can judge the encoded clip without heavy filters hiding compression.
+
+## Plain HTML
 
 ```html
-<link rel="stylesheet" href="reel/dist/styles.css" />
+<link rel="stylesheet" href="node_modules/reel-it/dist/styles.css" />
 
 <div data-reel-track style="height: 360vh">
   <div class="reel-stage">
-    <video data-reel-video data-reel-preload="eager"
-           src="ocean.mp4" poster="ocean-poster.jpg" muted playsinline></video>
-    <div class="reel-overlay" style="background: rgba(0,0,0,.4)"></div>
+    <video
+      data-reel-video
+      data-reel-preload="eager"
+      src="ocean.mp4"
+      poster="ocean-poster.jpg"
+      muted
+      playsinline
+    ></video>
+    <div class="reel-overlay" style="background: rgba(0,0,0,.28)"></div>
   </div>
+
   <div class="reel-content">
-    <div data-reel-reveal="0.06,0.34"><h1>Scroll is the timeline</h1></div>
+    <div data-reel-reveal="0.08,0.32">
+      <h1>Scroll is the timeline</h1>
+    </div>
+    <div data-reel-reveal="0.44,0.66,0.78,0.9">
+      <p>This line fades in, then fades out.</p>
+    </div>
   </div>
 </div>
 
 <script type="module">
-  import { auto } from "reel/core";
+  import { auto } from "reel-it/core";
   auto();
 </script>
 ```
 
-## Preparing a clip by hand
+## React API
 
-If you would rather encode it yourself, the important part is dense keyframes so seeks land instantly:
+`<Reel>` creates the track, stage, video, and content layers.
+
+| Prop | Default | Notes |
+| --- | --- | --- |
+| `src` | required | MP4 URL |
+| `poster` | none | image shown before the first frame |
+| `length` | `"300vh"` | scroll distance for the whole film |
+| `duration` | video duration | scrub only the first N seconds |
+| `smoothing` | `0.3` | lerp amount per animation frame |
+| `seek` | `"precise"` | use `"fast"` only for very heavy clips |
+| `preload` | `"native"` | `"eager"` fetches the whole clip as a blob |
+| `overlay` | none | CSS background for a dim/tint layer |
+
+`<Reveal from={0.1} to={0.35}>` fades and rises its children over a progress window.
+
+`useScrollProgress()` returns the current reel progress, `0` to `1`, anywhere inside a `<Reel>`.
+
+## Core API
+
+```ts
+import { createReel, createReveals, preloadFilm } from "reel-it/core";
+```
+
+Use the core when you want to wire the DOM yourself or build your own framework wrapper.
+
+```ts
+const reel = createReel({
+  track: document.querySelector("[data-reel-track]")!,
+  video: document.querySelector("[data-reel-video]")!,
+  smoothing: 0.3,
+  seek: "precise",
+});
+
+reel.onProgress((progress) => {
+  console.log(progress);
+});
+```
+
+## Local Development
 
 ```bash
-ffmpeg -i source.mp4 -an -vf "scale=1280:-2" \
-  -c:v libx264 -profile:v high -pix_fmt yuv420p \
-  -g 1 -x264-params keyint=1:scenecut=0 -crf 28 \
+git clone https://github.com/sayantan94/reel.git
+cd reel
+npm install
+npm run build
+python3 -m http.server 4173 --directory examples
+```
+
+Then open `http://localhost:4173`.
+
+The package is published as `reel-it`. The CLI can be called as `reel-it` from `npx`, and the installed binary also exposes `reel` for shorter local scripts.
+
+## Deploy The Website
+
+The repo includes `vercel.json`, so Vercel can build the package and serve the static website from `examples/`.
+
+```bash
+npm run build
+npx vercel
+```
+
+Vercel settings:
+
+```txt
+Build Command: npm run build
+Output Directory: examples
+```
+
+Keep prepared MP4 files under `examples/assets/` for the marketing site, or under `public/` in an app that consumes `reel-it`.
+
+## npm Release
+
+```bash
+npm run pack:check
+npm version patch
+npm publish --access public
+```
+
+`reel-it@1.0.0` is published on npm. Future releases should bump the version before publishing. The package contains the runtime, React adapter, CSS, and `reel` / `reel-it` CLI binaries.
+
+## Manual Encoding
+
+If you want to prepare a file yourself, keep the dense keyframes and sharp scaler:
+
+```bash
+ffmpeg -i source.mp4 -an -vf "scale=-2:1080:flags=lanczos" \
+  -c:v libx264 -profile:v high -pix_fmt yuv420p -preset slow \
+  -g 1 -x264-params keyint=1:scenecut=0 -crf 22 \
   -movflags +faststart film.mp4
 ```
 
-Keep it hero sized, a few MB, and serve it from a host that supports HTTP range requests (most do).
+For sharper output, use `scale=-2:1440:flags=lanczos` and `-crf 18`.
 
-## Demo asset
+## Examples
 
-`examples/assets/ink-720.mp4` is a free clip from Pexels. Swap in your own with `reel prepare`.
+The `examples/` folder is a static website built with reel-it itself:
+
+- `index.html` - docs and landing page with a scroll-scrubbed background
+- `pexels.html` - full-screen prepared color-water example
+- `hero.html` - large headline over film
+- `color.html` - centered copy over ink
+- `cosmos.html` - dark scrim with reveal copy
+- `minimal.html` - background only
 
 ## License
 

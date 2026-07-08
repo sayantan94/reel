@@ -19,9 +19,15 @@ export interface ReelOptions {
   duration?: number;
   /**
    * Smoothing factor 0..1 applied each frame (lerp toward the scroll target).
-   * 1 = instant/rigid, lower = silkier lag. Default 0.12.
+   * 1 = instant/rigid, lower = silkier lag. Default 0.3.
    */
   smoothing?: number;
+  /**
+   * How to seek the video. "precise" maps scroll to exact currentTime values.
+   * "fast" may feel smoother on heavy clips but can land on approximate frames.
+   * Default "precise".
+   */
+  seek?: "precise" | "fast";
   /** Called with progress 0..1 every frame the value changes. */
   onProgress?: (progress: number) => void;
 }
@@ -89,7 +95,7 @@ function trackProgress(track: HTMLElement): number {
 }
 
 export function createReel(options: ReelOptions): ReelHandle {
-  const { track, video, smoothing = 0.12 } = options;
+  const { track, video, smoothing = 0.3, seek = "precise" } = options;
   const subs = new Set<(p: number) => void>();
   if (options.onProgress) subs.add(options.onProgress);
 
@@ -128,8 +134,7 @@ export function createReel(options: ReelOptions): ReelHandle {
       // Only seek on a meaningful delta — avoids hammering the decoder.
       if (Math.abs(t - lastSeek) > 0.01) {
         lastSeek = t;
-        // fastSeek trades precision for smoothness where supported.
-        if (typeof video.fastSeek === "function") video.fastSeek(t);
+        if (seek === "fast" && typeof video.fastSeek === "function") video.fastSeek(t);
         else video.currentTime = t;
       }
     }

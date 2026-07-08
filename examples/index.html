@@ -3,48 +3,610 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>reel · examples</title>
+<title>reel - scroll-scrub video backgrounds</title>
+<meta name="description" content="reel is a tiny JavaScript framework for scroll-scrubbed video backgrounds. The page stays still; the background film moves with scroll." />
+<link rel="stylesheet" href="reel.css" />
 <style>
-  :root { --ink:#0f0f17; --paper:#f3efe2; --muted:#8a8aa0; --accent:#f0663b; --card:#17171f; --border:#26262f; }
-  * { margin:0; box-sizing:border-box; }
-  body { background:var(--ink); color:var(--paper); font-family:ui-sans-serif,system-ui,-apple-system,sans-serif; }
-  .wrap { max-width:920px; margin:0 auto; padding:12vh 24px 16vh; }
-  .logo { width:64px; height:64px; }
-  h1 { font-size:clamp(40px,8vw,72px); letter-spacing:-.03em; margin-top:20px; }
-  .tag { color:var(--muted); font-size:18px; margin-top:12px; max-width:52ch; line-height:1.5; }
-  .grid { margin-top:56px; display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:18px; }
-  a.card { display:block; text-decoration:none; color:inherit; border:1px solid var(--border); border-radius:16px; overflow:hidden; background:var(--card); transition:border-color .2s, transform .2s; }
-  a.card:hover { border-color:var(--accent); transform:translateY(-3px); }
-  .thumb { aspect-ratio:16/10; width:100%; object-fit:cover; display:block; background:#000; }
-  .meta { padding:16px 18px; }
-  .meta h2 { font-size:17px; font-family:ui-monospace,monospace; }
-  .meta p { color:var(--muted); font-size:14px; margin-top:6px; line-height:1.5; }
-  .foot { margin-top:56px; color:var(--muted); font-size:14px; }
-  .foot a { color:var(--accent); }
+  :root {
+    --paper:#19111b;
+    --ink:#f8eef7;
+    --muted:#cbb9c8;
+    --faint:#9b8498;
+    --line:rgba(255,238,250,.18);
+    --line-strong:rgba(255,238,250,.3);
+    --panel:#241827;
+    --panel-solid:#2b1d2f;
+    --accent:#ff4fb7;
+    --signal:#217d73;
+    --side-w:276px;
+    --progress:0;
+  }
+  * { box-sizing:border-box; }
+  html { scroll-behavior:smooth; }
+  body {
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    line-height:1.5;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:geometricPrecision;
+  }
+  a { color:inherit; text-decoration:none; }
+  a:hover { text-decoration:underline; }
+  code, pre, .mono { font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+
+  .side {
+    position:fixed;
+    inset:0 auto 0 0;
+    z-index:20;
+    width:var(--side-w);
+    padding:22px 18px;
+    background:#211625;
+    border-right:1px solid var(--line);
+    overflow:auto;
+  }
+  .brand { display:flex; align-items:center; gap:12px; margin-bottom:24px; }
+  .brand img { width:38px; height:38px; border-radius:8px; }
+  .brand .name { font:900 20px ui-monospace,monospace; }
+  .brand .tag { color:var(--muted); font-size:12px; }
+  .navgroup { margin-top:22px; }
+  .navgroup .label {
+    padding:0 10px 7px;
+    color:var(--faint);
+    font:850 11px ui-monospace,monospace;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+  }
+  .navgroup a {
+    display:block;
+    border-radius:8px;
+    padding:7px 10px;
+    color:var(--muted);
+    font-size:14px;
+  }
+  .navgroup a:hover { background:rgba(255,79,183,.12); color:var(--ink); text-decoration:none; }
+  .navgroup a.active { background:rgba(255,79,183,.18); color:var(--ink); box-shadow:inset 2px 0 0 var(--accent); }
+
+  .docs-track { margin-left:var(--side-w); background:var(--paper); }
+  .docs-stage { z-index:0; background:#120d14; }
+  .docs-video {
+    filter:none;
+    transform:translateZ(0);
+  }
+  .docs-scrim {
+    background:
+      linear-gradient(90deg,rgba(25,17,27,.86),rgba(25,17,27,.56) 34%,rgba(25,17,27,.08) 58%,rgba(25,17,27,0) 78%),
+      linear-gradient(180deg,rgba(25,17,27,.08),rgba(25,17,27,.32));
+  }
+  .docs-content {
+    position:relative;
+    max-width:1120px;
+    padding:0 56px 88px;
+  }
+
+  section { padding:72px 0; border-top:1px solid var(--line); }
+  section:first-child { border-top:0; }
+  .hero {
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    padding-top:36px;
+  }
+  .eyebrow {
+    margin:0;
+    color:var(--signal);
+    font:900 12px ui-monospace,monospace;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+  }
+  h1, h2, h3 { margin:0; letter-spacing:0; }
+  h1 {
+    margin-top:16px;
+    max-width:8ch;
+    font-size:clamp(64px,13vw,164px);
+    line-height:.86;
+    font-weight:950;
+  }
+  h2 { font-size:clamp(30px,4.2vw,54px); line-height:1.02; font-weight:920; }
+  h3 { font-size:17px; line-height:1.15; font-weight:850; }
+  p { max-width:68ch; margin:12px 0 0; color:var(--muted); }
+  .lead { max-width:58ch; color:#f7e8f5; font-size:clamp(20px,2.2vw,27px); line-height:1.38; }
+
+  .actions { display:flex; flex-wrap:wrap; gap:12px; align-items:center; margin-top:28px; }
+  .btn {
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-height:44px;
+    border:1px solid var(--line-strong);
+    border-radius:8px;
+    padding:0 16px;
+    background:#2b1d2f;
+    color:var(--ink);
+    font-weight:850;
+  }
+  .btn.primary { background:var(--accent); border-color:var(--accent); color:#1f0d1d; }
+  .btn:hover { border-color:var(--accent); text-decoration:none; }
+  .cmd {
+    display:inline-flex;
+    align-items:center;
+    gap:10px;
+    min-height:44px;
+    max-width:100%;
+    border:1px solid var(--line);
+    border-radius:8px;
+    background:#2b1d2f;
+    padding:0 12px;
+    color:var(--ink);
+    font-size:13px;
+    white-space:nowrap;
+  }
+  .cmd .prompt { color:var(--faint); }
+  .copybtn {
+    border:1px solid var(--line-strong);
+    border-radius:6px;
+    background:#35243a;
+    color:var(--muted);
+    font:850 11px ui-monospace,monospace;
+    padding:5px 8px;
+    cursor:pointer;
+  }
+  .copybtn:hover { color:var(--ink); border-color:var(--accent); }
+  .badges { display:flex; flex-wrap:wrap; gap:8px; margin-top:22px; }
+  .badge {
+    border:1px solid var(--line);
+    border-radius:999px;
+    background:#2b1d2f;
+    padding:7px 12px;
+    color:var(--ink);
+    font-size:13px;
+  }
+
+  .workflow-shell {
+    margin-top:24px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    background:#241827;
+    padding:16px;
+  }
+  .scrub-meter { display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center; }
+  .scrub-meter .label {
+    color:var(--faint);
+    font:850 11px ui-monospace,monospace;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+  }
+  .rail {
+    position:relative;
+    height:10px;
+    border-radius:999px;
+    background:rgba(20,18,14,.12);
+    overflow:hidden;
+  }
+  .rail::before {
+    content:"";
+    position:absolute;
+    inset:0 auto 0 0;
+    width:calc(var(--progress) * 100%);
+    background:linear-gradient(90deg,var(--accent),var(--signal));
+  }
+  .workflow {
+    display:grid;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:10px;
+    margin-top:14px;
+  }
+  .workflow-step {
+    min-height:112px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    background:#2b1d2f;
+    padding:12px;
+  }
+  .workflow-step .num { display:block; color:var(--accent); font:900 12px ui-monospace,monospace; margin-bottom:8px; }
+  .workflow-step p { font-size:13.5px; margin-top:6px; }
+
+  .grid,
+  .quality-grid,
+  .examples,
+  .arch-grid,
+  .contact {
+    display:grid;
+    gap:12px;
+    margin-top:20px;
+  }
+  .grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .quality-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  .examples { grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:14px; }
+  .arch-grid { grid-template-columns:repeat(5,minmax(0,1fr)); }
+  .contact { grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); }
+
+  .panel,
+  .feature,
+  .quality,
+  .arch-node,
+  .card,
+  .contact-card,
+  .showcase-card {
+    border:1px solid var(--line);
+    border-radius:8px;
+    background:var(--panel);
+  }
+  .feature, .quality, .arch-node, .contact-card { padding:16px; }
+  .feature p, .quality p, .arch-node p { font-size:14px; }
+  .arch-node .step {
+    display:block;
+    margin-bottom:8px;
+    color:var(--accent);
+    font:900 12px ui-monospace,monospace;
+  }
+  .arch-node .file {
+    display:block;
+    margin-top:12px;
+    color:var(--signal);
+    font:800 11px ui-monospace,monospace;
+  }
+  .formula {
+    display:inline-block;
+    margin-top:18px;
+    border:1px solid var(--line);
+    border-radius:8px;
+    background:#241827;
+    padding:12px 14px;
+    color:var(--signal);
+    font-size:13px;
+  }
+  .split {
+    display:grid;
+    grid-template-columns:minmax(0,1.04fr) minmax(300px,.96fr);
+    gap:24px;
+    align-items:start;
+  }
+  .note { border-left:2px solid var(--accent); padding-left:14px; color:#f7e8f5; }
+  pre {
+    margin:16px 0 0;
+    padding:16px 18px;
+    overflow:auto;
+    border:1px solid var(--line);
+    border-radius:8px;
+    background:#241827;
+    color:#f8eef7;
+    font-size:13px;
+    line-height:1.7;
+  }
+  pre .c { color:#81796c; }
+  pre .k { color:var(--signal); }
+  pre .s { color:#ff9ed7; }
+
+  .showcase-card {
+    display:grid;
+    grid-template-columns:minmax(0,1.18fr) minmax(280px,.82fr);
+    overflow:hidden;
+    margin-top:20px;
+    color:var(--ink);
+  }
+  .showcase-card:hover { border-color:var(--accent); text-decoration:none; }
+  .showcase-card img { width:100%; height:100%; min-height:320px; object-fit:cover; background:#120d14; }
+  .showcase-copy { padding:22px; }
+  .showcase-copy .label {
+    color:var(--signal);
+    font:900 12px ui-monospace,monospace;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+  }
+  .showcase-copy h3 { margin-top:12px; font-size:30px; line-height:1.05; }
+  .proof { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; margin-top:18px; }
+  .proof div { border:1px solid var(--line); border-radius:8px; padding:12px; background:#2b1d2f; }
+  .proof strong { display:block; color:var(--ink); font-size:22px; line-height:1; }
+  .proof span {
+    display:block;
+    margin-top:6px;
+    color:var(--muted);
+    font:800 11px ui-monospace,monospace;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+  }
+  .card { display:block; overflow:hidden; color:var(--ink); }
+  .card:hover { border-color:var(--accent); text-decoration:none; }
+  .thumb { display:block; width:100%; aspect-ratio:16/10; object-fit:cover; background:#120d14; }
+  .cardmeta { padding:13px 14px; }
+  .cardmeta p { font-size:13.5px; margin-top:4px; }
+  .quality .preset { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .quality .name { font:900 15px ui-monospace,monospace; }
+  .quality .spec { color:var(--signal); font:850 12px ui-monospace,monospace; }
+  .contact-card .label {
+    color:var(--faint);
+    font:850 11px ui-monospace,monospace;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+  }
+  .contact-card a { display:block; margin-top:6px; color:var(--ink); }
+  footer { padding:32px 0 8px; color:var(--muted); font-size:14px; }
+  .scrub-hud {
+    position:fixed;
+    right:22px;
+    bottom:18px;
+    z-index:30;
+    display:flex;
+    gap:12px;
+    align-items:center;
+    border:1px solid var(--line);
+    border-radius:999px;
+    background:#241827;
+    padding:8px 12px;
+    color:var(--ink);
+    font:850 11px ui-monospace,monospace;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+  }
+  .mini-rail { width:92px; height:6px; border-radius:999px; background:rgba(20,18,14,.13); overflow:hidden; }
+  .mini-rail span { display:block; height:100%; width:calc(var(--progress) * 100%); background:var(--accent); }
+
+  @media (max-width:1080px) {
+    .grid, .quality-grid, .arch-grid, .split, .showcase-card, .workflow { grid-template-columns:1fr; }
+    .arch-grid { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  }
+  @media (max-width:820px) {
+    .side { display:none; }
+    .docs-track { margin-left:0; }
+    .docs-content { padding:0 22px 64px; }
+    .hero { min-height:92vh; }
+    .cmd { white-space:normal; }
+    .scrub-hud { display:none; }
+  }
+  @media (max-width:560px) {
+    h1 { font-size:clamp(58px,22vw,98px); }
+    .arch-grid, .proof { grid-template-columns:1fr; }
+  }
 </style>
 </head>
 <body>
-  <div class="wrap">
-    <img class="logo" src="logo.svg" alt="reel" />
-    <h1>reel</h1>
-    <p class="tag">Turn any page into a film you scrub by scrolling. Scroll each live example below.</p>
-
-    <div class="grid">
-      <a class="card" href="hero.html">
-        <img class="thumb" src="assets/ink-poster.jpg" alt="" />
-        <div class="meta"><h2>Hero</h2><p>Full screen film with a headline that blooms in on scroll.</p></div>
-      </a>
-      <a class="card" href="story.html">
-        <img class="thumb" src="assets/dye-poster.jpg" alt="" />
-        <div class="meta"><h2>Story</h2><p>Several lines revealed at different points along the film.</p></div>
-      </a>
-      <a class="card" href="minimal.html">
-        <img class="thumb" src="assets/ink-poster.jpg" alt="" />
-        <div class="meta"><h2>Minimal</h2><p>Just the scrub background, no copy. Drop it behind anything.</p></div>
-      </a>
-    </div>
-
-    <p class="foot">Source and docs: <a href="https://github.com/sayantan94/reel">github.com/sayantan94/reel</a></p>
+<aside class="side">
+  <div class="brand">
+    <img src="logo.svg" alt="" />
+    <div><div class="name">reel</div><div class="tag">scroll scrub backgrounds</div></div>
   </div>
+  <nav>
+    <div class="navgroup"><div class="label">Start</div>
+      <a href="#overview">Overview</a>
+      <a href="#workflow">Workflow</a>
+      <a href="#architecture">Architecture</a>
+      <a href="#showcase">Example</a>
+      <a href="#quality">Output quality</a>
+      <a href="#quickstart">Quickstart</a>
+    </div>
+    <div class="navgroup"><div class="label">Build</div>
+      <a href="#react">React</a>
+      <a href="#html">Plain HTML</a>
+      <a href="#core">Core API</a>
+    </div>
+    <div class="navgroup"><div class="label">Demos</div>
+      <a href="pexels.html">Prepared full-video</a>
+      <a href="minimal.html">Minimal</a>
+    </div>
+  </nav>
+</aside>
+
+<main class="docs-track" data-reel-track>
+  <div class="reel-stage docs-stage">
+    <video class="reel-video docs-video" id="site-video" data-reel-video data-reel-preload="eager"
+           src="assets/color-water.mp4" poster="assets/color-water-poster.jpg" muted playsinline></video>
+    <div class="reel-overlay docs-scrim"></div>
+  </div>
+
+  <div class="reel-content docs-content">
+    <section id="overview" class="hero">
+      <p class="eyebrow">The background is the animation</p>
+      <h1>reel</h1>
+      <p class="lead">Scroll this page. The copy stays readable and still; the color film behind it scrubs frame by frame with your scroll.</p>
+      <div class="actions">
+        <a class="btn primary" href="#workflow">See the workflow</a>
+        <a class="btn" href="pexels.html">Open prepared example</a>
+        <span class="cmd"><span class="prompt">$</span> npm install reel-it <button class="copybtn" id="copy">Copy</button></span>
+      </div>
+      <div class="badges">
+        <span class="badge">Full-bleed sticky video</span>
+        <span class="badge">Scroll-to-currentTime loop</span>
+        <span class="badge">Actual MP4 prepared by CLI</span>
+        <span class="badge">No text choreography on this page</span>
+      </div>
+    </section>
+
+    <section id="workflow">
+      <h2>Animation workflow</h2>
+      <p>The moving part is the video timeline. The rest of the page is ordinary content layered over it.</p>
+      <div class="workflow-shell">
+        <div class="scrub-meter">
+          <span class="label">scroll</span>
+          <div class="rail"></div>
+          <span class="label" id="progress-label">0%</span>
+        </div>
+        <div class="workflow">
+          <div class="workflow-step"><span class="num">01</span><h3>Pick video</h3><p>Start with a color-water clip, product footage, or any local source.</p></div>
+          <div class="workflow-step"><span class="num">02</span><h3>Prepare asset</h3><p>The CLI trims, scales, extracts a poster, and encodes dense keyframes.</p></div>
+          <div class="workflow-step"><span class="num">03</span><h3>Pin stage</h3><p>A sticky full-screen video sits behind the document.</p></div>
+          <div class="workflow-step"><span class="num">04</span><h3>Map scroll</h3><p>Track progress becomes video.currentTime on every animation frame.</p></div>
+          <div class="workflow-step"><span class="num">05</span><h3>Ship page</h3><p>Use static content, reveals, React, or plain HTML depending on the experience.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="architecture">
+      <h2>Architecture</h2>
+      <p>The framework is small because the model is small: a scroll track, a pinned video, a seek loop, optional reveal helpers, and adapters.</p>
+      <div class="arch-grid">
+        <div class="arch-node"><span class="step">01</span><h3>CLI</h3><p>Download, trim, scale, posterize, and encode keyframes.</p><span class="file">bin/reel.mjs</span></div>
+        <div class="arch-node"><span class="step">02</span><h3>Track</h3><p>Measure one tall element and normalize scroll to 0..1.</p><span class="file">data-reel-track</span></div>
+        <div class="arch-node"><span class="step">03</span><h3>Engine</h3><p>Ease toward scroll target in RAF and seek the video.</p><span class="file">src/core.ts</span></div>
+        <div class="arch-node"><span class="step">04</span><h3>Helpers</h3><p>Optional reveal windows use the same progress value.</p><span class="file">createReveals()</span></div>
+        <div class="arch-node"><span class="step">05</span><h3>Adapters</h3><p>React and no-framework DOM APIs sit on the core.</p><span class="file">src/react.tsx</span></div>
+      </div>
+      <div class="formula">video.currentTime = scrollProgress * video.duration</div>
+    </section>
+
+    <section id="showcase">
+      <h2>Actual prepared example</h2>
+      <p>A separate campaign-style page uses the same framework with a real CLI-generated color-water MP4 as the full-screen background.</p>
+      <a class="showcase-card" href="pexels.html">
+        <img src="assets/color-water-poster.jpg" alt="" />
+        <div class="showcase-copy">
+          <div class="label">Prepared asset</div>
+          <h3>Color water motion page</h3>
+          <p>Open it when you want to see the framework used as a visual brand page, not documentation.</p>
+          <div class="proof">
+            <div><strong>10s</strong><span>generated clip</span></div>
+            <div><strong>1080p</strong><span>balanced encode</span></div>
+            <div><strong>RAF</strong><span>scrub loop</span></div>
+          </div>
+        </div>
+      </a>
+    </section>
+
+    <section id="quality">
+      <div class="split">
+        <div>
+          <h2>Output quality</h2>
+          <p>Scroll scrubbing punishes soft video because every seek can expose compression. The CLI prepares vivid animation clips for seeking instead of normal playback.</p>
+          <p class="note">Use `balanced` for hosted demos. Move to `sharp` for pages where the footage is the whole product experience.</p>
+        </div>
+        <pre>npx reel-it prepare ./raw/color-water.mp4 \
+  --seconds 10 --quality balanced --name color-water</pre>
+      </div>
+      <div class="quality-grid">
+        <div class="quality"><div class="preset"><span class="name">small</span><span class="spec">720 / CRF 26</span></div><p>Fast iteration and compact previews.</p></div>
+        <div class="quality"><div class="preset"><span class="name">balanced</span><span class="spec">1080 / CRF 22</span></div><p>The default for hosted examples.</p></div>
+        <div class="quality"><div class="preset"><span class="name">sharp</span><span class="spec">1440 / CRF 18</span></div><p>Higher-fidelity hero pages.</p></div>
+      </div>
+    </section>
+
+    <section id="quickstart">
+      <h2>Quickstart</h2>
+      <pre><span class="c"># install</span>
+npm install <span class="s">reel-it</span>
+
+<span class="c"># prepare the actual example asset</span>
+npx reel-it prepare ./raw/color-water.mp4 \
+  --seconds 10 --quality balanced --name color-water
+
+<span class="c"># same workflow for any downloaded clip</span>
+npx reel-it prepare ./raw/downloaded-clip.mp4 \
+  --seconds 10 --quality balanced --name campaign-bg</pre>
+      <pre><span class="k">import</span> { Reel } <span class="k">from</span> <span class="s">"reel-it"</span>;
+<span class="k">import</span> <span class="s">"reel-it/styles.css"</span>;
+
+&lt;Reel src=<span class="s">"/color-water.mp4"</span> poster=<span class="s">"/color-water-poster.jpg"</span>
+      length=<span class="s">"420vh"</span> preload=<span class="s">"eager"</span> seek=<span class="s">"precise"</span>&gt;
+  &lt;section&gt;Static page content over the moving background&lt;/section&gt;
+&lt;/Reel&gt;</pre>
+    </section>
+
+    <section id="examples">
+      <h2>Examples</h2>
+      <p>Two useful baselines: a polished motion page and a bare background-only page.</p>
+      <div class="examples">
+        <a class="card" href="pexels.html"><img class="thumb" src="assets/color-water-poster.jpg" alt="" /><div class="cardmeta"><h3>Color water</h3><p>Full-screen motion page.</p></div></a>
+        <a class="card" href="minimal.html"><img class="thumb" src="assets/ink2-poster.jpg" alt="" /><div class="cardmeta"><h3>Minimal</h3><p>Only the scrubbed film.</p></div></a>
+      </div>
+    </section>
+
+    <section id="react">
+      <h2>React</h2>
+      <p>`Reel` creates the track, sticky stage, video, optional overlay, and content layer.</p>
+      <pre>&lt;Reel src=<span class="s">"/clip.mp4"</span> poster=<span class="s">"/clip-poster.jpg"</span>
+      length=<span class="s">"420vh"</span> smoothing={0.3} seek=<span class="s">"precise"</span>
+      preload=<span class="s">"eager"</span> overlay=<span class="s">"rgba(255,255,255,.45)"</span>&gt;
+  &lt;section&gt;Your static content&lt;/section&gt;
+&lt;/Reel&gt;</pre>
+    </section>
+
+    <section id="html">
+      <h2>Plain HTML</h2>
+      <p>This page uses the same shape with a custom progress callback.</p>
+      <pre>&lt;main data-reel-track&gt;
+  &lt;div class=<span class="s">"reel-stage"</span>&gt;
+    &lt;video data-reel-video src=<span class="s">"clip.mp4"</span> muted playsinline&gt;&lt;/video&gt;
+  &lt;/div&gt;
+  &lt;div class=<span class="s">"reel-content"</span>&gt;Static content&lt;/div&gt;
+&lt;/main&gt;</pre>
+    </section>
+
+    <section id="core">
+      <h2>Core API</h2>
+      <p>For custom progress UI like the meter on this page, wire the core directly.</p>
+      <pre><span class="k">import</span> { createReel } <span class="k">from</span> <span class="s">"reel-it/core"</span>;
+
+createReel({
+  track,
+  video,
+  smoothing: 0.3,
+  seek: <span class="s">"precise"</span>,
+  onProgress: (p) =&gt; root.style.setProperty(<span class="s">"--progress"</span>, p),
+});</pre>
+    </section>
+
+    <section id="contact">
+      <h2>Ship a page with a moving background</h2>
+      <p>Questions, ideas, or examples built with reel.</p>
+      <div class="contact">
+        <div class="contact-card"><div class="label">Email</div><a href="mailto:sayantan.bhowmik94@gmail.com">sayantan.bhowmik94@gmail.com</a></div>
+        <div class="contact-card"><div class="label">Website</div><a href="https://www.sayantan.sh/">sayantan.sh</a></div>
+        <div class="contact-card"><div class="label">GitHub</div><a href="https://github.com/sayantan94">github.com/sayantan94</a></div>
+      </div>
+      <footer>MIT - <a href="https://github.com/sayantan94/reel">github.com/sayantan94/reel</a></footer>
+    </section>
+  </div>
+</main>
+
+<div class="scrub-hud">
+  <span id="hud-progress">0%</span>
+  <span class="mini-rail"><span></span></span>
+  <span>background scrub</span>
+</div>
+
+<script type="module">
+  import { createReel, preloadFilm } from "./reel.core.js";
+
+  const root = document.documentElement;
+  const track = document.querySelector("[data-reel-track]");
+  const video = document.querySelector("[data-reel-video]");
+  const progressLabel = document.getElementById("progress-label");
+  const hudProgress = document.getElementById("hud-progress");
+
+  await preloadFilm(video, video.getAttribute("src"));
+  createReel({
+    track,
+    video,
+    smoothing: 0.3,
+    seek: "precise",
+    onProgress(progress) {
+      const percent = Math.round(progress * 100);
+      root.style.setProperty("--progress", progress.toFixed(4));
+      progressLabel.textContent = percent + "%";
+      hudProgress.textContent = percent + "%";
+    },
+  });
+
+  document.getElementById("copy").addEventListener("click", (event) => {
+    navigator.clipboard.writeText("npm install reel-it").then(() => {
+      event.currentTarget.textContent = "Copied";
+      setTimeout(() => {
+        event.currentTarget.textContent = "Copy";
+      }, 1400);
+    });
+  });
+
+  const links = [...document.querySelectorAll('.navgroup a[href^="#"]')];
+  const activeById = new Map(links.map((link) => [link.getAttribute("href").slice(1), link]));
+  const observer = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      links.forEach((link) => link.classList.remove("active"));
+      activeById.get(entry.target.id)?.classList.add("active");
+    }
+  }, { rootMargin: "-45% 0px -50% 0px" });
+  document.querySelectorAll(".docs-content section[id]").forEach((section) => observer.observe(section));
+</script>
 </body>
 </html>

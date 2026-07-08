@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>reel - prepared color-water example</title>
+<link rel="stylesheet" href="reel.css" />
+<style>
+  :root {
+    --paper:#fbf2f8;
+    --ink:#171018;
+    --muted:#665762;
+    --line:rgba(24,20,14,.16);
+    --panel:#fffaf0;
+    --accent:#ff4fb7;
+    --progress:0;
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    -webkit-font-smoothing:antialiased;
+    text-rendering:geometricPrecision;
+  }
+  a { color:inherit; text-decoration:none; }
+  .reel-track { background:var(--paper); }
+  .reel-video {
+    filter:none;
+    transform:translateZ(0);
+  }
+  .wash {
+    background:
+      linear-gradient(90deg,rgba(251,242,248,.78),rgba(251,242,248,.36) 38%,rgba(251,242,248,.04) 64%,rgba(251,242,248,0) 82%),
+      linear-gradient(180deg,rgba(251,242,248,.02),rgba(251,242,248,.16));
+  }
+  .topbar {
+    position:fixed;
+    top:0;
+    left:0;
+    right:0;
+    z-index:20;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:16px;
+    padding:18px 28px;
+    color:var(--ink);
+    font:850 12px ui-monospace,monospace;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+  }
+  .topbar a {
+    border:1px solid var(--line);
+    border-radius:999px;
+    background:#fffaf0;
+    padding:8px 12px;
+  }
+  .progress {
+    display:flex;
+    align-items:center;
+    gap:10px;
+    border:1px solid var(--line);
+    border-radius:999px;
+    background:#fffaf0;
+    padding:8px 12px;
+  }
+  .bar {
+    width:120px;
+    height:6px;
+    border-radius:999px;
+    overflow:hidden;
+    background:rgba(21,18,13,.15);
+  }
+  .bar span {
+    display:block;
+    width:calc(var(--progress) * 100%);
+    height:100%;
+    background:var(--accent);
+  }
+  .content {
+    padding:0 7vw 10vh;
+    max-width:1180px;
+  }
+  section {
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    max-width:720px;
+    padding:12vh 0;
+  }
+  .eyebrow {
+    margin:0 0 14px;
+    color:#217d73;
+    font:900 12px ui-monospace,monospace;
+    text-transform:uppercase;
+    letter-spacing:.1em;
+  }
+  h1, h2 { margin:0; letter-spacing:0; }
+  h1 {
+    max-width:8ch;
+    font-size:clamp(66px,13vw,168px);
+    line-height:.86;
+    font-weight:950;
+  }
+  h2 {
+    max-width:10ch;
+    font-size:clamp(46px,8vw,104px);
+    line-height:.92;
+    font-weight:930;
+  }
+  p {
+    max-width:40ch;
+    margin:18px 0 0;
+    color:var(--muted);
+    font-size:clamp(18px,2vw,24px);
+    line-height:1.38;
+  }
+  .panel {
+    width:min(100%,560px);
+    border:1px solid var(--line);
+    border-radius:8px;
+    background:var(--panel);
+    padding:22px;
+  }
+  .stats {
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:10px;
+    margin-top:22px;
+  }
+  .stat {
+    border:1px solid var(--line);
+    border-radius:8px;
+    background:#fffdf8;
+    padding:14px;
+  }
+  .stat strong {
+    display:block;
+    font-size:28px;
+    line-height:1;
+  }
+  .stat span {
+    display:block;
+    margin-top:8px;
+    color:var(--muted);
+    font:850 11px ui-monospace,monospace;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+  }
+  .cta {
+    display:inline-flex;
+    align-items:center;
+    width:max-content;
+    min-height:44px;
+    margin-top:26px;
+    border:1px solid var(--accent);
+    border-radius:8px;
+    background:var(--accent);
+    color:#fffaf0;
+    padding:0 16px;
+    font-weight:850;
+  }
+  .command-line {
+    max-width:100%;
+    overflow-wrap:anywhere;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:clamp(14px,1.4vw,17px);
+  }
+  @media (max-width:720px) {
+    .topbar { padding:14px; }
+    .progress { display:none; }
+    .content { padding:0 22px 8vh; }
+    .stats { grid-template-columns:1fr; }
+  }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <a href="index.html">reel</a>
+    <div class="progress"><span id="pct">0%</span><span class="bar"><span></span></span><span>background scrub</span></div>
+  </div>
+
+  <main class="reel-track" data-reel-track>
+    <div class="reel-stage">
+      <video class="reel-video" data-reel-video data-reel-preload="eager"
+             src="assets/color-water.mp4" poster="assets/color-water-poster.jpg" muted playsinline></video>
+      <div class="reel-overlay wash"></div>
+    </div>
+
+    <div class="reel-content content">
+      <section>
+        <p class="eyebrow">Prepared asset / reel CLI</p>
+        <h1>Color water, frame by frame.</h1>
+        <p>A full-screen example where the text stays still and the background animation does the selling.</p>
+      </section>
+
+      <section>
+        <div class="panel">
+          <p class="eyebrow">Animation workflow</p>
+          <h2>Scroll drives the shot.</h2>
+          <p>This page serves the generated color-water MP4, then lets scroll progress seek the video to the matching timestamp.</p>
+          <div class="stats">
+            <div class="stat"><strong>10s</strong><span>clip</span></div>
+            <div class="stat"><strong>1080p</strong><span>encode</span></div>
+            <div class="stat"><strong>CLI</strong><span>prepared</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <p class="eyebrow">Build surface</p>
+        <h2>Use this workflow anywhere.</h2>
+        <p class="command-line">npx reel-it prepare ./raw/color-water.mp4 --seconds 10 --quality balanced --name color-water</p>
+        <a class="cta" href="index.html#quickstart">View quickstart</a>
+      </section>
+    </div>
+  </main>
+
+  <script type="module">
+    import { createReel, preloadFilm } from "./reel.core.js";
+
+    const root = document.documentElement;
+    const track = document.querySelector("[data-reel-track]");
+    const video = document.querySelector("[data-reel-video]");
+    const pct = document.getElementById("pct");
+
+    await preloadFilm(video, video.getAttribute("src"));
+    createReel({
+      track,
+      video,
+      smoothing: 0.3,
+      seek: "precise",
+      onProgress(progress) {
+        root.style.setProperty("--progress", progress.toFixed(4));
+        pct.textContent = Math.round(progress * 100) + "%";
+      },
+    });
+  </script>
+</body>
+</html>

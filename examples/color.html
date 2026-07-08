@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>reel · color</title>
+<link rel="stylesheet" href="reel.css" />
+<style>
+  :root { --ink:#07060a; --paper:#f4eef7; --accent:#ff5cd6; }
+  * { margin:0; box-sizing:border-box; }
+  body { background:var(--ink); color:var(--paper); font-family:ui-sans-serif,system-ui,sans-serif; }
+  .copy { position:sticky; top:0; height:100vh; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center; padding:0 8vw; pointer-events:none; }
+  .kicker { font-family:ui-monospace,monospace; font-size:12px; letter-spacing:.32em; text-transform:uppercase; opacity:.85; }
+  h1 { font-size:clamp(48px,11vw,150px); line-height:.92; font-weight:800; letter-spacing:-.035em; }
+  h1 .accent { color:var(--accent); }
+  p.lede { max-width:34ch; font-size:clamp(16px,2vw,22px); line-height:1.5; }
+  .cue { position:fixed; bottom:22px; left:50%; transform:translateX(-50%); font:600 11px ui-monospace,monospace; letter-spacing:.2em; text-transform:uppercase; opacity:.6; }
+  .home { position:fixed; top:18px; left:20px; z-index:6; font:600 12px ui-monospace,monospace; color:var(--paper); text-decoration:none; opacity:.7; }
+</style>
+</head>
+<body>
+  <a class="home" href="index.html">← examples</a>
+  <div class="reel-track" data-reel-track style="height:340vh;">
+    <div class="reel-stage">
+      <video class="reel-video" data-reel-video data-reel-preload="eager"
+             src="assets/smoke.mp4" poster="assets/smoke-poster.jpg" muted playsinline></video>
+      <div class="reel-overlay" style="background:radial-gradient(70% 60% at 50% 50%,rgba(7,6,10,.7),rgba(7,6,10,.35) 60%,rgba(7,6,10,.2));"></div>
+    </div>
+    <div class="reel-content">
+      <div class="copy">
+        <div data-reel-reveal="0.02,0.16"><p class="kicker">reel · color</p></div>
+        <div data-reel-reveal="0.06,0.34" data-reel-rise="44"><h1>Scroll in<br><span class="accent">color</span>.</h1></div>
+        <div data-reel-reveal="0.42,0.72"><p class="lede">Any clip works. Pink and blue ink, scrubbed by your scroll.</p></div>
+      </div>
+    </div>
+  </div>
+  <div class="cue">scroll ↓</div>
+  <script type="module">
+    import { auto } from "./reel.core.js";
+    auto();
+  </script>
+</body>
+</html>

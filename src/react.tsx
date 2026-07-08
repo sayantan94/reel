@@ -36,8 +36,10 @@ export interface ReelProps {
   length?: string;
   /** Scrub only this many video-seconds (defaults to full duration). */
   duration?: number;
-  /** Lerp smoothing 0..1. Default 0.12. */
+  /** Lerp smoothing 0..1. Default 0.3. */
   smoothing?: number;
+  /** "precise" maps scroll to exact frames; "fast" can help heavy clips. */
+  seek?: "precise" | "fast";
   /** Dim/tint the video with an overlay color (e.g. "rgba(0,0,0,.25)"). */
   overlay?: string;
   /**
@@ -57,6 +59,7 @@ export function Reel({
   length = "300vh",
   duration,
   smoothing,
+  seek,
   overlay,
   preload = "native",
   className,
@@ -78,6 +81,7 @@ export function Reel({
       video,
       duration,
       smoothing,
+      seek,
       onProgress: (p) => {
         progressRef.current = p;
         subs.current.forEach((fn) => fn(p));
@@ -85,7 +89,7 @@ export function Reel({
     });
     handleRef.current = reel;
     return () => reel.destroy();
-  }, [duration, smoothing, preload, src]);
+  }, [duration, smoothing, seek, preload, src]);
 
   const store = {
     subscribe: (fn: (p: number) => void) => {

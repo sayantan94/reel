@@ -58,7 +58,7 @@ function trackProgress(track) {
     return clamp01(-rect.top / scrollable);
 }
 export function createReel(options) {
-    const { track, video, smoothing = 0.12 } = options;
+    const { track, video, smoothing = 0.3, seek = "precise" } = options;
     const subs = new Set();
     if (options.onProgress)
         subs.add(options.onProgress);
@@ -94,8 +94,7 @@ export function createReel(options) {
             // Only seek on a meaningful delta — avoids hammering the decoder.
             if (Math.abs(t - lastSeek) > 0.01) {
                 lastSeek = t;
-                // fastSeek trades precision for smoothness where supported.
-                if (typeof video.fastSeek === "function")
+                if (seek === "fast" && typeof video.fastSeek === "function")
                     video.fastSeek(t);
                 else
                     video.currentTime = t;

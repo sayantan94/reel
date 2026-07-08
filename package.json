@@ -1,6 +1,6 @@
 {
   "name": "reel-it",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Turn any page into a film you scrub by scrolling. A fixed full-bleed video background whose timeline is driven by scroll, plus scroll-pinned content reveals. Framework-agnostic core + React API.",
   "type": "module",
   "repository": {
